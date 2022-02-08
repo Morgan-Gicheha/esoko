@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+    <title>Stock Forex Platform</title>
+</head>
+<body>
+   <h2>Stock Data</h2>
+   <p> We will populate stock data here.</p>
+   <table id="myTable">
+       <thead>
+           <th>Date</th>
+           <th>Stock Open</th>
+           <th>Stock High</th>
+           <th>Stock Low</th>
+           <th>Stock Close</th>
+           <th>Stock Volume</th>
+       </thead>
+       <tbody>
+        {% for st in stock_data %}
+         
+                <tr>
+                    {{ st }}
+                </tr>
+            
+        {%endfor %}
+       </tbody>
+   </table>
+   
+   <h2>Forex Data </h2>
+   <p> We will populate forex data here.</p> 
+</body>
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+<script type="textjavascript" src="//cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js">
+</script>
+<script type="text/javascript">
+$(document).ready( function () {
+    $('#myTable').DataTable();
+} );
+</script>
+
+</html>
