@@ -19,7 +19,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-ngrokURL = 'https://f079-197-248-16-215.ngrok.io/'
+ngrokURL = 'https://bbd8-197-248-16-215.ngrok.io/'
 
 class Forex(db.Model):
     __tablename__ = 'forex'
@@ -124,17 +124,19 @@ def stkpush():
     url = base_url + 'mpesa/stkpush/v1/processrequest'
    
     
+    stkPushResponse = requests.post(url=url, json=body, headers=headers)
     try:
-        stkPushResponse = requests.post(url=url, json=body, headers=headers)
-        MerchantRequestID = stkPushResponse.json()['MerchantRequestID']
-        CheckoutRequestID = stkPushResponse.json()['CheckoutRequestID']
-        ResponseCode = stkPushResponse.json()['ResponseCode']
-        
-        # 1. store the response in the database, i.e. the merchant request and the checkout request (make a new model for these)
-        mpesadata = Mpesadb(MerchantRequestID = MerchantRequestID,CheckoutRequestID = CheckoutRequestID, ResponseCode =ResponseCode )
-        db.session.add(mpesadata)
-        db.session.commit()
-        print('data has been saved in db')
+        if stkPushResponse.status_code == 200:
+                MerchantRequestID = stkPushResponse.json()['MerchantRequestID']
+                CheckoutRequestID = stkPushResponse.json()['CheckoutRequestID']
+                ResponseCode = stkPushResponse.json()['ResponseCode']
+                
+                # 1. store the response in the database, i.e. the merchant request and the checkout request (make a new model for these)
+                mpesadata = Mpesadb(MerchantRequestID = MerchantRequestID,CheckoutRequestID = CheckoutRequestID, ResponseCode =ResponseCode )
+                db.session.add(mpesadata)
+                db.session.commit()
+                print('data has been saved in db')
+
     except Exception as e:
         print(f'error is {e}')
   
