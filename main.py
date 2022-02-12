@@ -1,9 +1,10 @@
 from cmath import e
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request,make_response
 from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 import requests,json
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import false
 from sqlalchemy.sql import func
 from flask_cors import CORS
 from mpesa import *
@@ -19,7 +20,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-ngrokURL = 'https://bbd8-197-248-16-215.ngrok.io/'
+ngrokURL = 'https://f0f5-41-80-113-253.ngrok.io/'
 
 class Forex(db.Model):
     __tablename__ = 'forex'
@@ -36,6 +37,8 @@ class Mpesadb(db.Model):
     MerchantRequestID = db.Column(db.String(), nullable=False)
     CheckoutRequestID = db.Column(db.String(), nullable=False)
     ResponseCode = db.Column(db.Integer)
+    ResultDesc = db.Column(db.String(), nullable=True)
+    
 
 
 @app.before_first_request
@@ -126,7 +129,9 @@ def stkpush():
     
     stkPushResponse = requests.post(url=url, json=body, headers=headers)
     try:
+        print('::::::::: THIS IS IN stkpush B4 HTTP REQ :::::::::')
         if stkPushResponse.status_code == 200:
+                print(f'::::::::: THIS IS IN stkpush AFTER HTTP REQ :::{stkPushResponse}::::::')
                 MerchantRequestID = stkPushResponse.json()['MerchantRequestID']
                 CheckoutRequestID = stkPushResponse.json()['CheckoutRequestID']
                 ResponseCode = stkPushResponse.json()['ResponseCode']
@@ -149,26 +154,36 @@ def stk_push_checker():
     print('::::::::: IN STKPUSH CHECKER :::::::::r')
     apiData = request.get_json(force=True)
 
-    print(f'::::::::: THIS IS MY PROCESSOR RESPONSE :::::::::{apiData["Body"]["stkCallback"]["CheckoutRequestID"]}')
+    print(f'::::::::: THIS IS MY CHECKER RESPONSE :::::::::{apiData}')
 
     queriedRecord = Mpesadb.query.filter_by(CheckoutRequestID = apiData['Body']['stkCallback']['CheckoutRequestID'], MerchantRequestID = apiData['Body']['stkCallback']['MerchantRequestID']).first()
 
-    print(queriedRecord)
+    # print(queriedRecord)
     queriedRecord.ResponseCode = apiData['Body']['stkCallback']['ResultCode']
+    queriedRecord.ResultDesc = apiData['Body']['stkCallback']['ResultDesc']
     db.session.add(queriedRecord)
     db.session.commit()
 
-    return {'hello':'world'}
+    return queriedRecord
 
 # for safaricom
 @app.route("/stkpush/processor", methods=['GET', 'POST'])
 def stk_push_processor():
     # 3. Check what the user has done. The client shall do a loop every 5 seconds with the checkout request and the merchant request.
-    # query the endpoint /checker
-    # apiData = request.get_json(force=True)
-    x = requests.get(ngrokURL+'/stkpush/checker')
-    print('getting from ngrock ',x.content) 
-    return 'hey'
+    print(':::::::::  ENTERING PROCESSOR :::::::::')
+    apiData = request.get_json(force=True)
+    processorQueriedRecord = Mpesadb.query.filter_by(CheckoutRequestID = apiData['CheckoutRequestID'], MerchantRequestID = apiData['MerchantRequestID']).first()
+    print('processor',processorQueriedRecord.ResultDesc)
+
+
+    if processorQueriedRecord:
+        # resp = make_resonse(jsonify(dict({'':processorQueriedRecord.mid, '':processorQueriedRecord.cr, })),200()
+        resp =  jsonify(dict({'MerchantRequestID':processorQueriedRecord.MerchantRequestID, 'ResultDesc':processorQueriedRecord.ResultDesc}))
+        x = make_response(resp,200)
+        return x
+       
+    else:
+        return {'error':'error'}
     
 
 def request_scheduler():
