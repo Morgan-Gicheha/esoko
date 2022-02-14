@@ -20,7 +20,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 cors = CORS(app, resources={r"*": {"origins": "*"}})
 
-ngrokURL = 'https://f0f5-41-80-113-253.ngrok.io/'
+ngrokURL = 'https://f470-197-248-16-215.ngrok.io/'
 
 class Forex(db.Model):
     __tablename__ = 'forex'
@@ -144,7 +144,7 @@ def stkpush():
 
     except Exception as e:
         print(f'error is {e}')
-  
+        return e
     return stkPushResponse.json()
 
 @app.route("/stkpush/checker", methods=['GET', 'POST'])
@@ -173,14 +173,16 @@ def stk_push_processor():
     print(':::::::::  ENTERING PROCESSOR :::::::::')
     apiData = request.get_json(force=True)
     processorQueriedRecord = Mpesadb.query.filter_by(CheckoutRequestID = apiData['CheckoutRequestID'], MerchantRequestID = apiData['MerchantRequestID']).first()
-    print('processor',processorQueriedRecord.ResultDesc)
+    print('apiData',apiData)
 
 
     if processorQueriedRecord:
         # resp = make_resonse(jsonify(dict({'':processorQueriedRecord.mid, '':processorQueriedRecord.cr, })),200()
-        resp =  jsonify(dict({'MerchantRequestID':processorQueriedRecord.MerchantRequestID, 'ResultDesc':processorQueriedRecord.ResultDesc}))
-        x = make_response(resp,200)
-        return x
+        resp =  jsonify(dict({'MerchantRequestID':processorQueriedRecord.MerchantRequestID, 'ResultDesc':processorQueriedRecord.ResultDesc, 'ResponseCode':processorQueriedRecord.ResponseCode}))
+        print('this is resp',resp)       
+        resp = make_response(resp,200)
+        print(resp)
+        return resp
        
     else:
         return {'error':'error'}
